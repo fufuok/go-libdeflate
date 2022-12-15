@@ -14,4 +14,6 @@ var (
 
 	// checked error (in native)
 	errorInsufficientSpace = errors.New("libdeflate: native: buffer too short. Retry with larger buffer")
+
+	errTooLarge = errors.New("libdeflate: native: data too large")
 )

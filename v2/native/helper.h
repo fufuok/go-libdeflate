@@ -1,1 +1,0 @@
-int isNull(void * ptr);  

@@ -1,5 +1,7 @@
 package native
 
+const assumedCompressionFactor = 7
+
 func startMemAddr(b []byte) *byte {
 	if len(b) > 0 {
 		return &b[0]
