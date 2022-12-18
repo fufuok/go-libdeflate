@@ -18,18 +18,24 @@ import (
 
 // Decompressor decompresses any DEFLATE, zlib or gzip compressed data at any level
 type Decompressor struct {
-	dc       *C.decomp
-	isClosed bool
+	dc                     *C.decomp
+	isClosed               bool
+	maxDecompressionFactor int
 }
 
-// NewDecompressor returns a new Decompressor or and error if out of memory
+// NewDecompressor returns a new Decompressor with maxDecompressionFactor = 30 or and error if out of memory
 func NewDecompressor() (*Decompressor, error) {
+	return NewDecompressorWithExtendedDecompression(30)
+}
+
+// NewDecompressorWithExtendedDecompression returns a new Decompressor with maxDecompressionFactor or and error if out of memory
+func NewDecompressorWithExtendedDecompression(maxDecompressionFactor int) (*Decompressor, error) {
 	dc := C.libdeflate_alloc_decompressor()
 	if C.isNull(unsafe.Pointer(dc)) == 1 {
 		return nil, errorOutOfMemory
 	}
 
-	return &Decompressor{dc, false}, nil
+	return &Decompressor{dc, false, maxDecompressionFactor}, nil
 }
 
 // Decompress decompresses the given data from in to out and returns out and an error if something went wrong.
@@ -52,11 +58,11 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 
 	cons := 0
 	n := 0
-	inc := 1
+	decompFactor := 6
 	tryMaxSize := true
 	err := errorInsufficientSpace
 	for err == errorInsufficientSpace {
-		size := len(in) * assumedCompressionFactor * inc
+		size := len(in) * assumedCompressionFactor * decompFactor
 		maxSize := bytespool.MaxSize()
 		if size > maxSize {
 			if tryMaxSize {
@@ -68,11 +74,16 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 		}
 		out = bytespool.New(size)
 		cons, n, err = dc.decompress(in, out, false, f)
-		if inc >= 16 {
-			inc += 3
+
+		if decompFactor > dc.maxDecompressionFactor {
+			return cons, out, errorInsufficientDecompressionFactor
+		}
+
+		if decompFactor >= 16 {
+			decompFactor += 3
 			continue
 		}
-		inc += 5
+		decompFactor += 5
 	}
 
 	return cons, out[:n], err
