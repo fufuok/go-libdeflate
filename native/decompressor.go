@@ -60,10 +60,13 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 	n := 0
 	decompFactor := 6
 	tryMaxSize := true
+	maxSize := bytespool.MaxSize()
 	err := errorInsufficientSpace
 	for err == errorInsufficientSpace {
+		if out != nil {
+			bytespool.Put(out)
+		}
 		size := len(in) * assumedCompressionFactor * decompFactor
-		maxSize := bytespool.MaxSize()
 		if size > maxSize {
 			if tryMaxSize {
 				tryMaxSize = false
@@ -76,7 +79,12 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 		cons, n, err = dc.decompress(in, out, false, f)
 
 		if decompFactor > dc.maxDecompressionFactor {
-			return cons, out, errorInsufficientDecompressionFactor
+			if reduceMemoryUsage {
+				outSmallCap := bytespool.NewBytes(out[:n])
+				bytespool.Put(out)
+				out = outSmallCap
+			}
+			return cons, out[:n], errorInsufficientDecompressionFactor
 		}
 
 		if decompFactor >= 16 {
@@ -84,6 +92,12 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 			continue
 		}
 		decompFactor += 5
+	}
+
+	if reduceMemoryUsage {
+		outSmallCap := bytespool.NewBytes(out[:n])
+		bytespool.Put(out)
+		out = outSmallCap
 	}
 
 	return cons, out[:n], err

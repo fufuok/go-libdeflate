@@ -10,6 +10,8 @@ import "C"
 import (
 	"errors"
 	"unsafe"
+
+	"github.com/fufuok/bytespool"
 )
 
 // Compressor compresses data to zlib format at the specified level
@@ -54,15 +56,26 @@ func (c *Compressor) Compress(in, out []byte, f compress) (int, []byte, error) {
 		return n, b[:n], err
 	}
 
-	out = make([]byte, len(in))
+	out = bytespool.New(32 + len(in))
 	n, out, err := c.compress(in, out, f)
 
 	if err == errorShortBuffer { // if still doesn't fit (shouldn't happen at all)
-		out = make([]byte, 1000+len(in)*2)
-		n, _, _ := c.compress(in, out, f)
+		bytespool.Put(out)
+		out = bytespool.New(1000 + len(in)*2)
+		n, _, _ = c.compress(in, out, f)
+		if reduceMemoryUsage {
+			outSmallCap := bytespool.NewBytes(out[:n])
+			bytespool.Put(out)
+			out = outSmallCap
+		}
 		return n, out[:n], errors.New("libdeflate: native: compressed data is much larger than uncompressed")
 	}
 
+	if reduceMemoryUsage {
+		outSmallCap := bytespool.NewBytes(out[:n])
+		bytespool.Put(out)
+		out = outSmallCap
+	}
 	return n, out[:n], nil
 }
 
