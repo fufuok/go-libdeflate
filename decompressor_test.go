@@ -27,7 +27,7 @@ func TestDecompressDEFLATE(t *testing.T) {
 	out := make([]byte, len(shortString))
 	dc, _ := NewDecompressor()
 	defer dc.Close()
-	if c, _, err := dc.Decompress(in, out, ModeDEFLATE); err != nil || c != len(in){
+	if c, _, err := dc.Decompress(in, out, ModeDEFLATE); err != nil || c != len(in) {
 		t.Error(err)
 	}
 	slicesEqual(shortString, out, t)
@@ -52,7 +52,7 @@ func TestDecompressGzip(t *testing.T) {
 	out := make([]byte, len(shortString))
 	dc, _ := NewDecompressor()
 	defer dc.Close()
-	if c, _, err := dc.Decompress(in, out, ModeGzip); err != nil || c != len(in){
+	if c, _, err := dc.Decompress(in, out, ModeGzip); err != nil || c != len(in) {
 		t.Error(err)
 	}
 	slicesEqual(shortString, out, t)
@@ -76,6 +76,31 @@ func TestDecompressZlib(t *testing.T) {
 
 	out := make([]byte, len(shortString))
 	dc, _ := NewDecompressor()
+	defer dc.Close()
+	if c, _, err := dc.DecompressZlib(in, out); err != nil || c != len(in) {
+		t.Error(err)
+	}
+	slicesEqual(shortString, out, t)
+
+	c, out, err := dc.DecompressZlib(in, nil)
+	if err != nil || c != len(in) {
+		t.Error(err)
+	}
+	slicesEqual(shortString, out, t)
+}
+
+func TestDecompressZlib_AutoClose(t *testing.T) {
+	// compress with go standard lib
+	buf := &bytes.Buffer{}
+	w := zlib.NewWriter(buf)
+	w.Write(shortString)
+	w.Close()
+	in := buf.Bytes()
+
+	// decompress with this lib
+
+	out := make([]byte, len(shortString))
+	dc, _ := NewDecompressorAutoClose()
 	defer dc.Close()
 	if c, _, err := dc.DecompressZlib(in, out); err != nil || c != len(in) {
 		t.Error(err)

@@ -121,3 +121,11 @@ func (dc *Decompressor) Close() {
 	C.libdeflate_free_decompressor(dc.dc)
 	dc.isClosed = true
 }
+
+// PanicFreeClose is like Close but doesn't panic if the decompressor is already closed. This is useful for the higher-level autoclose functionality.
+func (c *Decompressor) PanicFreeClose() {
+	if c.isClosed {
+		return
+	}
+	c.Close()
+}
