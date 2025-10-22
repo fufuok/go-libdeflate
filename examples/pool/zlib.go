@@ -40,7 +40,7 @@ func Zip(data []byte) ([]byte, error) {
 	c := zipPool.Get().(*libdeflate.Compressor)
 	defer zipPool.Put(c)
 
-	_, dst, err := c.Compress(data, nil, libdeflate.ModeZlib)
+	_, dst, err := c.CompressZlib(data, nil)
 	return dst, err
 }
 
@@ -50,11 +50,7 @@ func ZipLevel(data []byte, level int) ([]byte, error) {
 		return nil, nil
 	}
 
-	c, err := libdeflate.NewCompressorLevelAutoClose(level)
-	if err != nil {
-		return nil, err
-	}
-	_, dst, err := c.Compress(data, nil, libdeflate.ModeZlib)
+	_, dst, err := libdeflate.CompressZlibLevel(data, nil, level)
 	return dst, err
 }
 
@@ -67,6 +63,6 @@ func Unzip(data []byte) ([]byte, error) {
 	dc := unZipPool.Get().(*libdeflate.Decompressor)
 	defer unZipPool.Put(dc)
 
-	_, src, err := dc.Decompress(data, nil, libdeflate.ModeZlib)
+	_, src, err := dc.DecompressZlib(data, nil)
 	return src, err
 }
