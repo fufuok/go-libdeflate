@@ -30,7 +30,7 @@ func NewDecompressor() (*Decompressor, error) {
 func NewDecompressorWithExtendedDecompression(maxDecompressionFactor int) (*Decompressor, error) {
 	dc := C.libdeflate_alloc_decompressor()
 	if C.isNull(unsafe.Pointer(dc)) == 1 {
-		return nil, errorOutOfMemory
+		return nil, ErrorOutOfMemory
 	}
 
 	return &Decompressor{dc, false, maxDecompressionFactor}, nil
@@ -43,10 +43,10 @@ func NewDecompressorWithExtendedDecompression(maxDecompressionFactor int) (*Deco
 // Returns the number of consumed bytes from 'in'
 func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, error) {
 	if dc.isClosed {
-		panic(errorAlreadyClosed)
+		panic(ErrorAlreadyClosed)
 	}
 	if len(in) == 0 {
-		return 0, out, errorNoInput
+		return 0, out, ErrorNoInput
 	}
 
 	if len(out) > 0 {
@@ -59,8 +59,8 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 	decompFactor := 6
 	tryMaxSize := true
 	maxSize := bspool.MaxSize()
-	err := errorInsufficientSpace
-	for err == errorInsufficientSpace {
+	err := ErrorInsufficientSpace
+	for err == ErrorInsufficientSpace {
 		if len(out) > 0 {
 			bspool.Put(out)
 		}
@@ -70,7 +70,7 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 				tryMaxSize = false
 				size = maxSize
 			} else {
-				return 0, nil, errTooLarge
+				return 0, nil, ErrTooLarge
 			}
 		}
 		out = bspool.New(size)
@@ -82,7 +82,7 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 				bspool.Put(out)
 				out = outSmallCap
 			}
-			return cons, out[:n], errorInsufficientDecompressionFactor
+			return cons, out[:n], ErrorInsufficientDecompressionFactor
 		}
 
 		if decompFactor >= 16 {
@@ -128,7 +128,7 @@ func (dc *Decompressor) decompress(in, out []byte, fit bool, f decompress) (int,
 // Close frees the memory allocated by C objects
 func (dc *Decompressor) Close() {
 	if dc.isClosed {
-		panic(errorAlreadyClosed)
+		panic(ErrorAlreadyClosed)
 	}
 	C.libdeflate_free_decompressor(dc.dc)
 	dc.isClosed = true
