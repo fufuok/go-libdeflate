@@ -12,8 +12,6 @@ typedef struct libdeflate_decompressor decomp;
 import "C"
 import (
 	"unsafe"
-
-	"github.com/fufuok/bytespool"
 )
 
 // Decompressor decompresses any DEFLATE, zlib or gzip compressed data at any level
@@ -51,7 +49,7 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 		return 0, out, errorNoInput
 	}
 
-	if out != nil {
+	if len(out) > 0 {
 		cons, _, err := dc.decompress(in, out, true, f)
 		return cons, out, err
 	}
@@ -60,11 +58,11 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 	n := 0
 	decompFactor := 6
 	tryMaxSize := true
-	maxSize := bytespool.MaxSize()
+	maxSize := bspool.MaxSize()
 	err := errorInsufficientSpace
 	for err == errorInsufficientSpace {
-		if out != nil {
-			bytespool.Put(out)
+		if len(out) > 0 {
+			bspool.Put(out)
 		}
 		size := len(in) * assumedCompressionFactor * decompFactor
 		if size > maxSize {
@@ -75,13 +73,13 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 				return 0, nil, errTooLarge
 			}
 		}
-		out = bytespool.New(size)
+		out = bspool.New(size)
 		cons, n, err = dc.decompress(in, out, false, f)
 
 		if decompFactor > dc.maxDecompressionFactor {
 			if reduceMemoryUsage {
-				outSmallCap := bytespool.NewBytes(out[:n])
-				bytespool.Put(out)
+				outSmallCap := bspool.NewBytes(out[:n])
+				bspool.Put(out)
 				out = outSmallCap
 			}
 			return cons, out[:n], errorInsufficientDecompressionFactor
@@ -95,8 +93,8 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 	}
 
 	if reduceMemoryUsage {
-		outSmallCap := bytespool.NewBytes(out[:n])
-		bytespool.Put(out)
+		outSmallCap := bspool.NewBytes(out[:n])
+		bspool.Put(out)
 		out = outSmallCap
 	}
 
