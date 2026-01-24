@@ -13,8 +13,8 @@ func init() {
 	// Optional: Set to true to minimize the capacity of returned slices, but adds one copy operation
 	// libdeflate.SetReduceMemoryUsage(true)
 
-	// Optional: Set the initial and maximum size of the byte pool (default 2B ~ 8MiB)
-	// libdeflate.InitDefaultPools(32, 128<<20)
+	// Optional: Set the initial and maximum size of the byte pool (default 2B ~ 4MiB)
+	// libdeflate.InitPools(32, 128<<20)
 }
 
 func main() {
