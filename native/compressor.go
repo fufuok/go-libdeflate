@@ -9,7 +9,6 @@ typedef struct libdeflate_compressor comp;
 import "C"
 import (
 	"errors"
-	"unsafe"
 )
 
 // Compressor compresses data to zlib format at the specified level
@@ -27,7 +26,7 @@ func NewCompressor(lvl int) (*Compressor, error) {
 	}
 
 	c := C.libdeflate_alloc_compressor(C.int(lvl))
-	if C.isNull(unsafe.Pointer(c)) == 1 {
+	if c == nil {
 		return nil, ErrorOutOfMemory
 	}
 

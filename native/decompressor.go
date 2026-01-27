@@ -29,7 +29,7 @@ func NewDecompressor() (*Decompressor, error) {
 // NewDecompressorWithExtendedDecompression returns a new Decompressor with maxDecompressionFactor or and error if out of memory
 func NewDecompressorWithExtendedDecompression(maxDecompressionFactor int) (*Decompressor, error) {
 	dc := C.libdeflate_alloc_decompressor()
-	if C.isNull(unsafe.Pointer(dc)) == 1 {
+	if dc == nil {
 		return nil, ErrorOutOfMemory
 	}
 
