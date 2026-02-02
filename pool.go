@@ -18,8 +18,3 @@ func SetWithStats(t bool) {
 func BytesPoolStats(topN int) bytespool.RuntimeSummary {
 	return native.BytesPoolStats(topN)
 }
-
-// SetReduceMemoryUsage For: Return smaller slices when compressing #22
-func SetReduceMemoryUsage(b bool) {
-	native.SetReduceMemoryUsage(b)
-}

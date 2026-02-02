@@ -14,8 +14,6 @@ var (
 	ErrorInsufficientDecompressionFactor = errors.New("libdeflate: native: your compressed data seems to be extraordinarily large when decompressed. " +
 		"However, this could also indicate corrupted data. The current maximum decompression factor does not allow for larger decompression, try to increase it")
 
-	// checked error (in native)
+	// ErrorInsufficientSpace checked error (in native)
 	ErrorInsufficientSpace = errors.New("libdeflate: native: buffer too short. Retry with larger buffer")
-
-	ErrTooLarge = errors.New("libdeflate: native: data too large")
 )

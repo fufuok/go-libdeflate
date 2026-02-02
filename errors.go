@@ -3,6 +3,6 @@ package libdeflate
 import "errors"
 
 var (
-	errorInvalidModeCompressor   = errors.New("libdeflate: compressor: invalid mode")
-	errorInvalidModeDecompressor = errors.New("libdeflate: decompressor: invalid mode")
+	ErrorInvalidModeCompressor   = errors.New("libdeflate: compressor: invalid mode")
+	ErrorInvalidModeDecompressor = errors.New("libdeflate: decompressor: invalid mode")
 )

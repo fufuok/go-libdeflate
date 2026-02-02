@@ -11,6 +11,7 @@ typedef struct libdeflate_decompressor decomp;
 */
 import "C"
 import (
+	"errors"
 	"unsafe"
 )
 
@@ -21,9 +22,9 @@ type Decompressor struct {
 	maxDecompressionFactor int
 }
 
-// NewDecompressor returns a new Decompressor with maxDecompressionFactor = 30 or and error if out of memory
+// NewDecompressor returns a new Decompressor with maxDecompressionFactor = 32 or and error if out of memory
 func NewDecompressor() (*Decompressor, error) {
-	return NewDecompressorWithExtendedDecompression(30)
+	return NewDecompressorWithExtendedDecompression(32)
 }
 
 // NewDecompressorWithExtendedDecompression returns a new Decompressor with maxDecompressionFactor or and error if out of memory
@@ -50,55 +51,52 @@ func (dc *Decompressor) Decompress(in, out []byte, f decompress) (int, []byte, e
 	}
 
 	if len(out) > 0 {
-		cons, _, err := dc.decompress(in, out, true, f)
-		return cons, out, err
+		cons, n, err := dc.decompress(in, out, true, f)
+		return cons, out[:n], err
 	}
 
 	cons := 0
 	n := 0
-	decompFactor := 6
+	decompFactor := 4
+	if dc.maxDecompressionFactor < decompFactor {
+		decompFactor = dc.maxDecompressionFactor
+	}
+
+	size := 32 + len(in)*decompFactor
+	firstAttempt := true
 	tryMaxSize := true
-	maxSize := bspool.MaxSize()
 	err := ErrorInsufficientSpace
-	for err == ErrorInsufficientSpace {
-		if len(out) > 0 {
+	for errors.Is(err, ErrorInsufficientSpace) {
+		if !firstAttempt && len(out) > 0 {
 			bspool.Put(out)
 		}
-		size := len(in) * assumedCompressionFactor * decompFactor
-		if size > maxSize {
-			if tryMaxSize {
-				tryMaxSize = false
-				size = maxSize
-			} else {
-				return 0, nil, ErrTooLarge
-			}
-		}
+		firstAttempt = false
+
 		out = bspool.New(size)
 		cons, n, err = dc.decompress(in, out, false, f)
+		if err == nil {
+			break
+		}
 
 		if decompFactor > dc.maxDecompressionFactor {
-			if reduceMemoryUsage {
-				outSmallCap := bspool.NewBytes(out[:n])
-				bspool.Put(out)
-				out = outSmallCap
+			if tryMaxSize && size < bspool.MaxSize() {
+				tryMaxSize = false
+				size = bspool.MaxSize()
+				continue
 			}
-			return cons, out[:n], ErrorInsufficientDecompressionFactor
+
+			outSmallCap := bspool.NewBytes(out[:n])
+			bspool.Put(out)
+			return cons, outSmallCap, ErrorInsufficientDecompressionFactor
 		}
 
-		if decompFactor >= 16 {
-			decompFactor += 3
-			continue
-		}
-		decompFactor += 5
+		decompFactor *= 2
+		size = 32 + len(in)*decompFactor
 	}
 
-	if reduceMemoryUsage {
-		outSmallCap := bspool.NewBytes(out[:n])
-		bspool.Put(out)
-		out = outSmallCap
-	}
-
-	return cons, out[:n], err
+	outSmallCap := bspool.NewBytes(out[:n])
+	bspool.Put(out)
+	return cons, outSmallCap, err
 }
 
 func (dc *Decompressor) decompress(in, out []byte, fit bool, f decompress) (int, int, error) {

@@ -5,7 +5,7 @@
 ## 改动:
 
 - 解压缩花费了太多内存分配次数, 使用: [bytespool](https://github.com/fufuok/bytespool) 改进, 使用后回收可以实现内存 0 分配.
-- 可选设置支持解压缩的最大文件, 即最大缓冲值: `InitDefaultPools(minSize, maxSize int)`, 默认 `2B ~ 8MiB`.
+- 可选设置支持解压缩的最大文件, 即最大缓冲值: `InitDefaultPools(minSize, maxSize int)`, 默认 `32B ~ 1MiB`.
 - 保留使用静态链接库, 而不使用 pkg-config.
 - 同步增加 `NewCompressorAutoClose` 功能, 无需手动执行 `c.Close`, 方便用于压缩对象池. 
 - 示例: [example](examples/pool)

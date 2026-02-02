@@ -4,13 +4,8 @@ import (
 	"github.com/fufuok/bytespool"
 )
 
-var (
-	// default: true
-	reduceMemoryUsage = true
-
-	// default byte slice pool: [32, 1MB]
-	bspool = bytespool.NewCapacityPools(32, 1*1024*1024)
-)
+// default byte slice pool: [32, 1MB]
+var bspool = bytespool.NewCapacityPools(32, 1*1024*1024)
 
 func InitPools(minSize, maxSize int) {
 	if minSize > 0 && maxSize > 0 {
@@ -24,8 +19,4 @@ func SetWithStats(t bool) {
 
 func BytesPoolStats(topN int) bytespool.RuntimeSummary {
 	return bytespool.RuntimeStatsSummary(topN, bspool)
-}
-
-func SetReduceMemoryUsage(b bool) {
-	reduceMemoryUsage = b
 }

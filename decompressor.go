@@ -7,8 +7,7 @@ import "github.com/fufuok/go-libdeflate/native"
 // A single decompressor must not not be used across multiple threads concurrently.
 // If you want to decompress concurrently, create a decompressor for each thread.
 //
-// Always Close() the decompressor to free c memory or use the AutoClose constructors,
-// which will automatically close the Compressor at garabage collection time of the underlying natvie equivalent.
+// Always Close() the decompressor to free c memory or use the AutoClose constructors, which will automatically close the Compressor at garabage collection time of the underlying natvie equivalent.
 // One Decompressor allocates at least 32KiB.
 type Decompressor struct {
 	dc *native.Decompressor
@@ -84,7 +83,7 @@ func (dc Decompressor) Decompress(in, out []byte, m Mode) (int, []byte, error) {
 	case ModeGzip:
 		return dc.dc.Decompress(in, out, native.DecompressGzip)
 	default:
-		panic(errorInvalidModeDecompressor)
+		panic(ErrorInvalidModeDecompressor)
 	}
 }
 

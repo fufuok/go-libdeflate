@@ -37,9 +37,9 @@ func NewCompressor(lvl int) (*Compressor, error) {
 // of bytes written to out, out and an error if the out buffer was too short.
 // If you pass nil for out, this function will allocate a fitting buffer and return it.
 //
-// Notice that for extremely small or already highly compressed data,
+// Notice that for tiny or already highly compressed data,
 // the compressed data could be larger than uncompressed.
-// If out == nil: For a too large discrepancy (len(out) > 1000 + 2 * len(in)) Compress will error
+// If out == nil: For a too large discrepancy (len(out) > 1024 + 2 * len(in)) Compress will error
 func (c *Compressor) Compress(in, out []byte, f compress) (int, []byte, error) {
 	if c.isClosed {
 		panic(ErrorAlreadyClosed)
@@ -48,7 +48,7 @@ func (c *Compressor) Compress(in, out []byte, f compress) (int, []byte, error) {
 		return 0, out, ErrorNoInput
 	}
 
-	if out != nil {
+	if len(out) > 0 {
 		n, b, err := c.compress(in, out, f)
 		return n, b[:n], err
 	}
@@ -56,24 +56,22 @@ func (c *Compressor) Compress(in, out []byte, f compress) (int, []byte, error) {
 	out = bspool.New(32 + len(in))
 	n, out, err := c.compress(in, out, f)
 
-	if err == ErrorShortBuffer { // if still doesn't fit (shouldn't happen at all)
+	if errors.Is(err, ErrorShortBuffer) { // if still doesn't fit (shouldn't happen at all)
 		bspool.Put(out)
-		out = bspool.New(1000 + len(in)*2)
-		n, _, _ = c.compress(in, out, f)
-		if reduceMemoryUsage {
-			outSmallCap := bspool.NewBytes(out[:n])
+		out = bspool.New(1024 + len(in)*2)
+		n, _, err = c.compress(in, out, f)
+		if err != nil {
 			bspool.Put(out)
-			out = outSmallCap
+			return 0, nil, err
 		}
-		return n, out[:n], errors.New("libdeflate: native: compressed data is much larger than uncompressed")
-	}
-
-	if reduceMemoryUsage {
 		outSmallCap := bspool.NewBytes(out[:n])
 		bspool.Put(out)
-		out = outSmallCap
+		return n, outSmallCap, nil
 	}
-	return n, out[:n], nil
+
+	outSmallCap := bspool.NewBytes(out[:n])
+	bspool.Put(out)
+	return n, outSmallCap, nil
 }
 
 func (c *Compressor) compress(in, out []byte, f compress) (int, []byte, error) {

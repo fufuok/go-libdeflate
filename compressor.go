@@ -7,8 +7,7 @@ import "github.com/fufuok/go-libdeflate/native"
 // A single compressor must not not be used across multiple threads concurrently.
 // If you want to compress concurrently, create a compressor for each thread.
 //
-// Always Close() the decompressor to free c memory or use the AutoClose constructors,
-// which will automatically close the Compressor at garabage collection time of the underlying natvie equivalent.
+// Always Close() the decompressor to free c memory or use the AutoClose constructors, which will automatically close the Compressor at garabage collection time of the underlying natvie equivalent.
 // One Compressor allocates at least 32 KiB.
 type Compressor struct {
 	c   *native.Compressor
@@ -72,7 +71,7 @@ func (c Compressor) CompressZlib(in, out []byte) (int, []byte, error) {
 //
 // Notice that for extremely small or already highly compressed data,
 // the compressed data could be larger than uncompressed.
-// If out == nil: For a too large discrepancy (len(out) > 1000 + 2 * len(in)) Compress will error
+// If out == nil: For a too large discrepancy (len(out) > 1024 + 2 * len(in)) Compress will error
 func (c Compressor) Compress(in, out []byte, m Mode) (int, []byte, error) {
 	switch m {
 	case ModeZlib:
@@ -82,7 +81,7 @@ func (c Compressor) Compress(in, out []byte, m Mode) (int, []byte, error) {
 	case ModeGzip:
 		return c.c.Compress(in, out, native.CompressGzip)
 	default:
-		panic(errorInvalidModeCompressor)
+		panic(ErrorInvalidModeCompressor)
 	}
 }
 
@@ -109,7 +108,7 @@ func (c Compressor) WorstCaseCompressedSize(size int, m Mode) (max int) {
 	case ModeGzip:
 		return c.c.UpperBound(size, native.GzipBound)
 	default:
-		panic(errorInvalidModeCompressor)
+		panic(ErrorInvalidModeCompressor)
 	}
 }
 
