@@ -7,7 +7,7 @@ import (
 	"github.com/fufuok/bytespool"
 
 	"github.com/fufuok/go-libdeflate"
-	"github.com/fufuok/go-libdeflate/examples/helper"
+	"github.com/fufuok/go-libdeflate/helper"
 )
 
 func init() {

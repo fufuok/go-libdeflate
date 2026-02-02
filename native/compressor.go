@@ -64,9 +64,6 @@ func (c *Compressor) Compress(in, out []byte, f compress) (int, []byte, error) {
 			bspool.Put(out)
 			return 0, nil, err
 		}
-		outSmallCap := bspool.NewBytes(out[:n])
-		bspool.Put(out)
-		return n, outSmallCap, nil
 	}
 
 	outSmallCap := bspool.NewBytes(out[:n])
